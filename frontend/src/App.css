@@ -1,0 +1,7 @@
+.border-success {
+  border: 2px solid green !important;
+}
+
+.border-danger {
+  border: 2px solid red !important;
+}
