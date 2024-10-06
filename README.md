@@ -50,6 +50,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 Project includes a script to determine if a user acceptance criteria is clear, specific, and does not include redundant information. It also includes a script to review the user acceptance criteria and provide a recommendation for the next steps.
 
 ## Example output
-[uac-bad1.png](uac-bad1.png)
-[uac-bad2.png](uac-bad2.png)
-[uac-good.png](uac-good.png)
+![uac-bad1.png](uac-bad1.png)
+![uac-bad2.png](uac-bad2.png)
+![uac-good.png](uac-good.png)
