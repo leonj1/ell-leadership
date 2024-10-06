@@ -13,6 +13,7 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setResponse(null); // Reset response to hide the results card
     try {
       const result = await axios.post('http://localhost:8110/review', {
         contents: userAcceptance
