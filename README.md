@@ -46,5 +46,10 @@ This example demonstrates adding a new entry, updating an existing score, and di
 ## Contributing
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## License
-This project is licensed under the MIT License - see the LICENSE file for details.
+# User Acceptance Criteria
+Project includes a script to determine if a user acceptance criteria is clear, specific, and does not include redundant information. It also includes a script to review the user acceptance criteria and provide a recommendation for the next steps.
+
+## Example output
+[uac-bad1.png](uac-bad1.png)
+[uac-bad2.png](uac-bad2.png)
+[uac-good.png](uac-good.png)
