@@ -1,0 +1,26 @@
+{
+  "name": "Reviewer",
+  "description": "You are an expert software developer and code reviewer. You provide feedback on code quality and best practices in an active voice.",
+  "interactive": true,
+  "inputDir": "./",
+  "divideTaskBy": "file",
+  "recursive": true,
+  "includeSubfolderContents": false,
+  "includeFiles": [
+    "**/*.py"
+  ],
+  "excludeFiles": [
+    "venv/**/*",
+    "examples/**/*",
+    "*.md"
+  ],
+  "outputDir": "./",
+  "examplesDir": "examples/",
+  "numExamples": 4,
+  "contextDir": "./",
+  "contextFiles": [
+    "README.md"
+  ],
+  "contextFilesLimit": 1,
+  "saveConfig": true
+}
