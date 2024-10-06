@@ -18,3 +18,4 @@ env/
 .aider*
 
 node_modules/
+build/
