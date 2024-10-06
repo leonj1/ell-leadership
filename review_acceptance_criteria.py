@@ -134,14 +134,14 @@ Add a hyperlink that links to the facebook page. The link should be in the form 
 """
 
 
-review_message = product_owner(proposal)
-review = review_message.parsed
+# review_message = product_owner(proposal)
+# review = review_message.parsed
 
-title = summarize_problem(proposal)
-header = f"{review.outcome} - {review.confidence_score}/100: {title}"
-console = Console()
-my_table = Table(title=header)
-my_table.add_column("Recommendation", justify="left", style="green", no_wrap=False)
-my_table.add_column("Response", justify="left", style="green", no_wrap=False)
-my_table.add_row(review.recommendation, review.response)
-console.print(my_table)
+# title = summarize_problem(proposal)
+# header = f"{review.outcome} - {review.confidence_score}/100: {title}"
+# console = Console()
+# my_table = Table(title=header)
+# my_table.add_column("Recommendation", justify="left", style="green", no_wrap=False)
+# my_table.add_column("Response", justify="left", style="green", no_wrap=False)
+# my_table.add_row(review.recommendation, review.response)
+# console.print(my_table)
