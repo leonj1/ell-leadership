@@ -31,14 +31,12 @@ class UserAcceptanceSummary(BaseModel):
 
 ell.init(verbose=True)
 
-# TODO: SLA requirements, performance requirements, security requirements, compliance requirements, legal requirements, accessibility requirements, privacy requirements.
-
 @ell.simple(model="gpt-4o-mini", temperature=1.0)
-def summarize_problem(goal : str):
+def summarize_problem(goal: str):
     """
-You are a product owner that summarizes the problem statement into a single sentence.
-"""
-    return f"Sumamrize the problem statement into a single sentence: {goal}"
+    You are a product owner that summarizes the problem statement into a single sentence.
+    """
+    return f"Summarize the problem statement into a single sentence: {goal}"
 
 @ell.complex(model="gpt-4o-mini", response_format=SolveableProblem, temperature=1.0)
 def is_solveable_problem(goal : str):
