@@ -65,6 +65,16 @@ function App() {
               <p><strong>Confidence Score:</strong> {response.confidence_score}</p>
               <p><strong>Recommendation:</strong> {response.recommendation}</p>
               <p><strong>Response:</strong> {response.response}</p>
+              {response.possible_alternatives && response.possible_alternatives.length > 0 && (
+                <>
+                  <p><strong>Possible Alternatives:</strong></p>
+                  <ul>
+                    {response.possible_alternatives.map((alternative, index) => (
+                      <li key={index}>{alternative}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </div>
           </div>
         )}

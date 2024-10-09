@@ -28,6 +28,7 @@ class UserAcceptanceSummary(BaseModel):
     confidence_score: int = Field(description="The confidence score this is a complete problem. Scores can be between 1-100.")
     recommendation: str = Field(description="The summary of why this user acceptance criteria is accepted or rejected.")
     response: str = Field(description="The response from the product owner to the originator of the user acceptance criteria telling them what they need to change for the acceptance criteria to be accepted.")
+    possible_alternatives: List[str] = Field(description="The list of alternate user acceptance criteria, using the original as a starting point, that is detailed and specific. Each re-written example should be able to generate a PASS outcome.")
 
 ell.init(verbose=True)
 
@@ -114,11 +115,18 @@ You write with an active voice.
     is_complete = is_a_complete_problem(user_acceptance_criteria)
     is_not_redundant_response = is_not_redundant(user_acceptance_criteria)
 
-    return f"Determine if the user acceptance criteria is solvable, complete, and does not include reduntant information. Use pre-screened review from others to ensure that the user acceptance criteria is clear, specific, and does not include redundant information. Write in your voice: {[
+    return f"""
+Determine if the user acceptance criteria is solvable, complete, and does not include 
+reduntant information. Use pre-screened review from others to ensure that the 
+user acceptance criteria is clear, specific, and does not include redundant information. 
+If the user acceptance critera does not PASS, provide a list of possible alternatives that 
+would generate a PASS outcome.
+Write in your voice: {[
         user_acceptance_criteria,
         is_solveable,
         is_complete,
-        is_not_redundant_response]}."
+        is_not_redundant_response]}.
+        """
 
 
 # proposal = """
