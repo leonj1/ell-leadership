@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from review_acceptance_criteria import UserAcceptanceSummary, summarize_problem, product_owner
+from review_acceptance_criteria import UserAcceptanceSummary, summarize_problem, product_owner, user_acceptance_criteria_recommendation_engine
 
 app = FastAPI()
 
@@ -24,10 +24,22 @@ class ProblemInput(BaseModel):
 class ProblemSummary(BaseModel):
     summary: str
 
+class GenerateInput(BaseModel):
+    targetAudience: str
+    draftUAC: str
+
+class GenerateOutput(BaseModel):
+    recommendation: str
+
 @app.post("/summary", response_model=ProblemSummary)
 async def summary(problem: ProblemInput):
     summary = summarize_problem(problem.goal)
     return ProblemSummary(summary=summary)
+
+@app.post("/generate", response_model=GenerateOutput)
+async def generate(input: GenerateInput):
+    recommendation = user_acceptance_criteria_recommendation_engine(input.targetAudience, input.draftUAC)
+    return GenerateOutput(recommendation=recommendation)
 
 @app.post("/review", response_model=UserAcceptanceSummary)
 async def review(acceptance_criteria: AcceptanceCriteria):

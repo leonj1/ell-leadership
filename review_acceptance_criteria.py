@@ -35,8 +35,40 @@ class UserAcceptanceSummary(BaseModel):
     recommendation: str = Field(description="The summary of why this user acceptance criteria is accepted or rejected.")
     response: str = Field(description="The response from the product owner to the originator of the user acceptance criteria telling them what they need to change for the acceptance criteria to be accepted.")
     possible_alternatives: List[str] = Field(description="The list of alternate user acceptance criteria, using the original as a starting point, that is detailed and specific. Each re-written example should be able to generate a PASS outcome.")
+    
+class UserAcceptanceCriteriaDraft(BaseModel):
+    user_acceptance_criteria: str = Field(description="The user acceptance criteria in full detail.")
+
+class UserAcceptanceCriteriaChosen(BaseModel):
+    user_acceptance_criteria: str = Field(description="The user acceptance criteria in full detail.")
+    outcome: str = Field(description="The outcome of the problem written as PASS or FAIL")
+    confidence_score: int = Field(description="The confidence score this is a complete problem. Scores can be between 1-100.")
 
 ell.init(verbose=True)
+
+@ell.simple(model="gpt-4-turbo", temperature=0.5)
+def generate_user_acceptance_criteria(audience: str, proposal: str):
+    return [
+        ell.system(f"{audience}"),
+        ell.user(f"Write in an active voice.: {proposal}.")
+    ]
+
+@ell.simple(model="gpt-4o-mini", temperature=0.4)
+def write_a_draft_of_a_user_acceptance_criteria(idea : str):
+    """You are an adept technical writer."""
+    return f"Write a succint user acceptance criteria that is achievable, complete, and does not include redundant information: {idea}."
+
+@ell.complex(model="gpt-4o-2024-08-06", response_format=UserAcceptanceCriteriaChosen, temperature=0.1)
+def choose_the_best_draft(drafts : List[str]):
+    """You are an expert editor of technical documents."""
+    return f"Choose the best draft from the following list: {'\n'.join(drafts)}."
+
+@ell.complex(model="gpt-4o-2024-08-06", response_format=UserAcceptanceSummary, temperature=0.1)
+def summarize_user_acceptance_criteria(audience: str, proposal: str):
+    return [
+        ell.system(f"{audience}"),
+        ell.user(f"Write in an active voice.: {proposal}.")
+    ]
 
 @ell.complex(model="gpt-4o-mini", response_format=SenteceCheck, temperature=0.1)
 def is_sentence(input : str):
@@ -44,7 +76,6 @@ def is_sentence(input : str):
 You are an english professor.
 """
     return f"Determine if the following input is a sentence: {input}"
-
 
 @ell.complex(model="gpt-4o-mini", response_format=RewrittenUserAcceptanceCriteria, temperature=1.0)
 def rewrite_user_acceptance_criteria(criteria: str):
@@ -102,7 +133,6 @@ Only respond in 1 paragraph.
 """
     return f"Determine if the following problem includes any redundant information: {goal}"
 
-
 @ell.complex(model="gpt-4o-2024-08-06", response_format=UserAcceptanceSummary, temperature=0.1)
 def product_owner_junior(user_acceptance_criteria : str):
     """
@@ -158,6 +188,19 @@ Write in your voice: {[
         is_not_redundant_response]}.
         """
 
+def attempt_rewrite(user_acceptance_criteria, max_attempts=3):
+    default_response = ""
+    for i in range(max_attempts):
+        print(f"Attempt {i+1} of {max_attempts} to rewrite the user acceptance criteria...")
+        rewrite = rewrite_user_acceptance_criteria(user_acceptance_criteria)
+        print(f"Checking rewrite: {rewrite}")
+        reviewed = product_owner_junior(rewrite)
+        if reviewed.parsed.outcome == "PASS":
+            print(f"Rewrite {i+1} of {max_attempts} passes: {rewrite}")
+            return rewrite
+        default_response = rewrite.parsed.user_acceptance_criteria
+    return default_response
+
 def product_owner(user_acceptance_criteria : str):
     is_sentence_response = is_sentence(user_acceptance_criteria)
     if is_sentence_response.parsed.is_sentence == "NO":
@@ -169,18 +212,34 @@ def product_owner(user_acceptance_criteria : str):
         return result
 
     print("The original user acceptance criteria does not pass. Attempting to rewrite...")
-    # make 3 attempts to find a rewritten user acceptance criteria that passes
-    for i in range(3):
-        print(f"Attempt {i+1} of 3 to rewrite the user acceptance criteria...")
-        rewrite = rewrite_user_acceptance_criteria(user_acceptance_criteria)
-        print(f"Checking rewrite: {rewrite}")
-        reviewed = product_owner_junior(rewrite)
-        if reviewed.parsed.outcome == "PASS":
-            print(f"Rewrite {i+1} of 3 passes: {rewrite}")
-            # instead of appending the rewrite to the possible_alternatives, create a new list with only the rewrite
-            result.parsed.possible_alternatives = [rewrite]
-            return result
+    rewrite = attempt_rewrite(user_acceptance_criteria)
+    if rewrite:
+        result.parsed.possible_alternatives = [rewrite]
     return result
+
+def user_acceptance_criteria_recommendation_engine(audience: str, proposal: str):
+    ideas = generate_user_acceptance_criteria(audience, proposal, api_params=(dict(n=3)))
+    drafts = [write_a_draft_of_a_user_acceptance_criteria(idea) for idea in ideas]
+    best_draft = choose_the_best_draft(drafts)
+    result = summarize_user_acceptance_criteria(audience, best_draft.parsed.user_acceptance_criteria)
+    if result.parsed.outcome == "PASS":
+        print("Original user acceptance criteria passed on the first try.")
+        return best_draft.parsed.user_acceptance_criteria
+
+    max_attempts = 3
+    print("The original user acceptance criteria does not pass. Attempting to rewrite...")
+    for i in range(max_attempts):
+        print(f"Attempt {i+1} of {max_attempts} to rewrite the user acceptance criteria...")
+        ideas = generate_user_acceptance_criteria(audience, proposal, api_params=(dict(n=3)))
+        drafts = [write_a_draft_of_a_user_acceptance_criteria(idea) for idea in ideas]
+        best_draft = choose_the_best_draft(drafts)
+        reviewed = summarize_user_acceptance_criteria(audience, best_draft.parsed.user_acceptance_criteria)
+        if reviewed.parsed.outcome == "PASS":
+            print(f"Rewrite {i+1} of {max_attempts} passes: {best_draft}")
+            return best_draft.parsed.user_acceptance_criteria
+
+    print("Unable to rewrite the user acceptance criteria. Returning original attempt.")
+    return best_draft.parsed.user_acceptance_criteria
 
 
 # proposal = """

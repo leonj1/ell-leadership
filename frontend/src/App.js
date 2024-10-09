@@ -5,11 +5,14 @@ import './App.css';
 
 function App() {
   const [userAcceptance, setUserAcceptance] = useState('');
+  const [targetAudience, setTargetAudience] = useState('');
+  const [draftUAC, setDraftUAC] = useState('');
   const [response, setResponse] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState(null);
+  const [activeView, setActiveView] = useState('forAnotherTeam');
 
   const copyToClipboard = (text, index) => {
     if (navigator.clipboard) {
@@ -58,35 +61,102 @@ function App() {
     }
   };
 
+  const handleGenerate = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setResponse(null); // Reset response to hide the results card
+    try {
+      const result = await axios.post('http://localhost:8110/generate', {
+        targetAudience: targetAudience,
+        draftUAC: draftUAC
+      });
+      setResponse(result.data);
+    } catch (error) {
+      console.error('Error:', error);
+      setErrorMessage(error.response?.data?.detail || 'An error occurred while processing your request.');
+      setShowModal(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleCloseModal = () => setShowModal(false);
 
   return (
     <div className="container">
       <header className="my-4">
         <h1 className="text-center">User Acceptance Quality Checker</h1>
+        <div className="d-flex justify-content-center mt-3">
+          <Button 
+            variant={activeView === 'forAnotherTeam' ? 'primary' : 'secondary'} 
+            className="me-2"
+            onClick={() => setActiveView('forAnotherTeam')}
+          >
+            For another Team
+          </Button>
+          <Button 
+            variant={activeView === 'forMyTeam' ? 'primary' : 'secondary'}
+            onClick={() => setActiveView('forMyTeam')}
+          >
+            For my Team
+          </Button>
+        </div>
       </header>
       <main>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <textarea
-              className="form-control"
-              value={userAcceptance}
-              onChange={(e) => setUserAcceptance(e.target.value)}
-              placeholder="Create a link to facebook.com"
-              rows="4"
-            ></textarea>
-          </div>
-          <button type="submit" className="btn btn-primary" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
-                <span className="ms-2">Reviewing...</span>
-              </>
-            ) : (
-              'Review'
-            )}
-          </button>
-        </form>
+        {activeView === 'forAnotherTeam' ? (
+          <form onSubmit={handleSubmit}>
+            <div className="mb-3">
+              <textarea
+                className="form-control"
+                value={userAcceptance}
+                onChange={(e) => setUserAcceptance(e.target.value)}
+                placeholder="Create a link to facebook.com"
+                rows="4"
+              ></textarea>
+            </div>
+            <button type="submit" className="btn btn-primary" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
+                  <span className="ms-2">Reviewing...</span>
+                </>
+              ) : (
+                'Review'
+              )}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleGenerate}>
+            <div className="mb-3">
+              <input
+                type="text"
+                className="form-control"
+                value={targetAudience}
+                onChange={(e) => setTargetAudience(e.target.value)}
+                placeholder="Describe the target audience"
+              />
+            </div>
+            <div className="mb-3">
+              <textarea
+                className="form-control"
+                value={draftUAC}
+                onChange={(e) => setDraftUAC(e.target.value)}
+                placeholder="Draft User Acceptance criteria"
+                rows="4"
+              ></textarea>
+            </div>
+            <button type="submit" className="btn btn-primary" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
+                  <span className="ms-2">Generating...</span>
+                </>
+              ) : (
+                'Generate'
+              )}
+            </button>
+          </form>
+        )}
         {response && (
           <div className={`card mt-4 ${response.outcome === 'PASS' ? 'border-success' : 'border-danger'}`}>
             <div className="card-body">
