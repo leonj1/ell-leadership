@@ -5,6 +5,12 @@ from rich.table import Table
 from rich.console import Console
 from rich import box
 
+class SenteceCheck(BaseModel):
+    is_sentence: bool = Field(description="Is this a sentence? Respond with either YES or NO.")
+
+class RewrittenUserAcceptanceCriteria(BaseModel):
+    user_acceptance_criteria: bool = Field(description="This is a user acceptance criteria written as full sentence.")
+
 class SolveableProblem(BaseModel):
     solveable: bool = Field(description="Is the problem solveable?")
     confidence_score: int = Field(description="The confidence score this is a solveable problem.")
@@ -31,6 +37,30 @@ class UserAcceptanceSummary(BaseModel):
     possible_alternatives: List[str] = Field(description="The list of alternate user acceptance criteria, using the original as a starting point, that is detailed and specific. Each re-written example should be able to generate a PASS outcome.")
 
 ell.init(verbose=True)
+
+@ell.complex(model="gpt-4o-mini", response_format=SenteceCheck, temperature=0.1)
+def is_sentence(input : str):
+    """
+You are an english professor.
+"""
+    return f"Determine if the following input is a sentence: {input}"
+
+
+@ell.complex(model="gpt-4o-mini", response_format=RewrittenUserAcceptanceCriteria, temperature=1.0)
+def rewrite_user_acceptance_criteria(criteria: str):
+    """
+    You are a Technical writers that creates instruction manuals, how-to guides, 
+    journal articles, and other supporting documents to communicate complex and technical information more easily.
+    You have:
+        Excellent writing and editing skills
+        Strong command of English grammar and style
+        Ability to understand and explain complex technical concepts
+        Attention to detail
+    """
+    return f"""
+Analyze the following user acceptance criteria and rewrite it in a way that is clear, specific, and does not include redundant information.
+The rewritten user acceptance criteria should be written from the point of view of the original author. Not speaking to the orignal author. {criteria}
+"""
 
 @ell.simple(model="gpt-4o-mini", temperature=1.0)
 def summarize_problem(goal: str):
@@ -74,7 +104,7 @@ Only respond in 1 paragraph.
 
 
 @ell.complex(model="gpt-4o-2024-08-06", response_format=UserAcceptanceSummary, temperature=0.1)
-def product_owner(user_acceptance_criteria : str):
+def product_owner_junior(user_acceptance_criteria : str):
     """
 An experienced product owner (PO) possesses a unique blend of business acumen, technical 
 understanding, and leadership skills. They are masters of communication, adept at bridging 
@@ -127,6 +157,30 @@ Write in your voice: {[
         is_complete,
         is_not_redundant_response]}.
         """
+
+def product_owner(user_acceptance_criteria : str):
+    is_sentence_response = is_sentence(user_acceptance_criteria)
+    if is_sentence_response.parsed.is_sentence == "NO":
+        return f"The user acceptance criteria is not a sentence. Please rewrite the user acceptance criteria as a sentence."
+
+    result = product_owner_junior(user_acceptance_criteria)
+    if result.parsed.outcome == "PASS":
+        print("Original user acceptance criteria passed on the first try.")
+        return result
+
+    print("The original user acceptance criteria does not pass. Attempting to rewrite...")
+    # make 3 attempts to find a rewritten user acceptance criteria that passes
+    for i in range(3):
+        print(f"Attempt {i+1} of 3 to rewrite the user acceptance criteria...")
+        rewrite = rewrite_user_acceptance_criteria(user_acceptance_criteria)
+        print(f"Checking rewrite: {rewrite}")
+        reviewed = product_owner_junior(rewrite)
+        if reviewed.parsed.outcome == "PASS":
+            print(f"Rewrite {i+1} of 3 passes: {rewrite}")
+            # instead of appending the rewrite to the possible_alternatives, create a new list with only the rewrite
+            result.parsed.possible_alternatives = [rewrite]
+            return result
+    return result
 
 
 # proposal = """

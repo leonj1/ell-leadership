@@ -9,6 +9,36 @@ function App() {
   const [showModal, setShowModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [copiedIndex, setCopiedIndex] = useState(null);
+
+  const copyToClipboard = (text, index) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text)
+        .then(() => {
+          setCopiedIndex(index);
+          setTimeout(() => setCopiedIndex(null), 2000);
+        })
+        .catch(err => {
+          console.error('Failed to copy text: ', err);
+          alert('Failed to copy text. Please try again.');
+        });
+    } else {
+      // Fallback for browsers that don't support navigator.clipboard
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        setCopiedIndex(index);
+        setTimeout(() => setCopiedIndex(null), 2000);
+      } catch (err) {
+        console.error('Failed to copy text: ', err);
+        alert('Failed to copy text. Please try again.');
+      }
+      document.body.removeChild(textArea);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -68,9 +98,22 @@ function App() {
               {response.possible_alternatives && response.possible_alternatives.length > 0 && (
                 <>
                   <p><strong>Possible Alternatives:</strong></p>
-                  <ul>
+                  <ul className="list-unstyled">
                     {response.possible_alternatives.map((alternative, index) => (
-                      <li key={index}>{alternative}</li>
+                      <li key={index} className="d-flex align-items-center mb-2">
+                        <Button
+                          variant="outline-secondary"
+                          size="sm"
+                          className="me-2"
+                          onClick={() => copyToClipboard(alternative, index)}
+                        >
+                          📋
+                        </Button>
+                        <span>{alternative}</span>
+                        {copiedIndex === index && (
+                          <span className="text-success ms-2">Copied!</span>
+                        )}
+                      </li>
                     ))}
                   </ul>
                 </>
