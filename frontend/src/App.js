@@ -157,10 +157,10 @@ function App() {
             </button>
           </form>
         )}
-        {response && (
+        {activeView === 'forAnotherTeam' && response && (
           <div className={`card mt-4 ${response.outcome === 'PASS' ? 'border-success' : 'border-danger'}`}>
             <div className="card-body">
-              <h5 className="card-title">Review Results</h5>
+              <h5 className="card-title">Review Results for Another Team</h5>
               <p><strong>Outcome:</strong> {response.outcome}</p>
               <p><strong>Confidence Score:</strong> {response.confidence_score}</p>
               <p><strong>Recommendation:</strong> {response.recommendation}</p>
@@ -188,6 +188,14 @@ function App() {
                   </ul>
                 </>
               )}
+            </div>
+          </div>
+        )}
+        {activeView === 'forMyTeam' && response && response.recommendation && (
+          <div className="card mt-4 border-success">
+            <div className="card-body">
+              <h5 className="card-title">Review Results for My Team</h5>
+              <p><strong>Recommendation:</strong> {response.recommendation}</p>
             </div>
           </div>
         )}
