@@ -5,3 +5,19 @@
 .border-danger {
   border: 2px solid red !important;
 }
+
+.card {
+  margin-top: 1rem;
+}
+
+.card-body p {
+  margin-bottom: 0.5rem;
+}
+
+.list-unstyled {
+  padding-left: 0;
+}
+
+.list-unstyled li {
+  margin-bottom: 0.5rem;
+}

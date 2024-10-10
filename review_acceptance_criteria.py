@@ -36,8 +36,14 @@ class UserAcceptanceSummary(BaseModel):
     response: str = Field(description="The response from the product owner to the originator of the user acceptance criteria telling them what they need to change for the acceptance criteria to be accepted.")
     possible_alternatives: List[str] = Field(description="The list of alternate user acceptance criteria, using the original as a starting point, that is detailed and specific. Each re-written example should be able to generate a PASS outcome.")
     
+class TeamDependencies(BaseModel):
+    team_name: str = Field(description="The name of the team that is expected to complete the user acceptance criteria.")
+    expected_work: str = Field(description="The expected work to complete the user acceptance criteria.")
+
 class UserAcceptanceCriteriaDraft(BaseModel):
-    user_acceptance_criteria: str = Field(description="The user acceptance criteria in full detail.")
+    summary: str = Field(description="The user acceptance criteria in full detail.")
+    acceptance_criteria: str = Field(description="The user acceptance criteria with clear statement of the goals or what the milestones are.")
+    cross_team_dependencies: List[TeamDependencies] = Field(description="The cross team dependencies that are needed to complete the user acceptance criteria.")
 
 class UserAcceptanceCriteriaChosen(BaseModel):
     user_acceptance_criteria: str = Field(description="The user acceptance criteria in full detail.")
@@ -46,11 +52,19 @@ class UserAcceptanceCriteriaChosen(BaseModel):
 
 ell.init(verbose=True)
 
-@ell.simple(model="gpt-4-turbo", temperature=0.5)
-def generate_user_acceptance_criteria(audience: str, proposal: str):
+
+@ell.complex(model="gpt-4o-2024-08-06", response_format=UserAcceptanceCriteriaDraft, temperature=0.5)
+def generate_user_acceptance_criteria(goal: str, your_role: str, audience: str, proposal: str):
     return [
-        ell.system(f"{audience}"),
-        ell.user(f"Write in an active voice.: {proposal}.")
+        ell.system(f"""
+Your role is: {your_role}.
+You are creating a user acceptance criteria for the following audience: {audience}
+"""),
+        ell.user(f"""
+Create a user acceptance criteria with focus on {goal}. 
+The acceptance criteria is: {proposal}.
+Write in an active voice.
+""")
     ]
 
 @ell.simple(model="gpt-4o-mini", temperature=0.4)
@@ -58,7 +72,7 @@ def write_a_draft_of_a_user_acceptance_criteria(idea : str):
     """You are an adept technical writer."""
     return f"Write a succint user acceptance criteria that is achievable, complete, and does not include redundant information: {idea}."
 
-@ell.complex(model="gpt-4o-2024-08-06", response_format=UserAcceptanceCriteriaChosen, temperature=0.1)
+@ell.complex(model="gpt-4o-2024-08-06", response_format=UserAcceptanceCriteriaDraft, temperature=0.1)
 def choose_the_best_draft(drafts : List[str]):
     """You are an expert editor of technical documents."""
     return f"Choose the best draft from the following list: {'\n'.join(drafts)}."
@@ -217,29 +231,29 @@ def product_owner(user_acceptance_criteria : str):
         result.parsed.possible_alternatives = [rewrite]
     return result
 
-def user_acceptance_criteria_recommendation_engine(audience: str, proposal: str):
-    ideas = generate_user_acceptance_criteria(audience, proposal, api_params=(dict(n=3)))
+def user_acceptance_criteria_recommendation_engine(goal: str, voice: str, audience: str, proposal: str):
+    ideas = generate_user_acceptance_criteria(goal, voice, audience, proposal, api_params=(dict(n=5)))
     drafts = [write_a_draft_of_a_user_acceptance_criteria(idea) for idea in ideas]
     best_draft = choose_the_best_draft(drafts)
-    result = summarize_user_acceptance_criteria(audience, best_draft.parsed.user_acceptance_criteria)
+    result = summarize_user_acceptance_criteria(audience, best_draft.parsed.summary)
     if result.parsed.outcome == "PASS":
         print("Original user acceptance criteria passed on the first try.")
-        return best_draft.parsed.user_acceptance_criteria
+        return best_draft.parsed
 
-    max_attempts = 3
+    max_attempts = 10
     print("The original user acceptance criteria does not pass. Attempting to rewrite...")
     for i in range(max_attempts):
         print(f"Attempt {i+1} of {max_attempts} to rewrite the user acceptance criteria...")
-        ideas = generate_user_acceptance_criteria(audience, proposal, api_params=(dict(n=3)))
+        ideas = generate_user_acceptance_criteria(goal, voice, audience, proposal, api_params=(dict(n=3)))
         drafts = [write_a_draft_of_a_user_acceptance_criteria(idea) for idea in ideas]
         best_draft = choose_the_best_draft(drafts)
-        reviewed = summarize_user_acceptance_criteria(audience, best_draft.parsed.user_acceptance_criteria)
+        reviewed = summarize_user_acceptance_criteria(audience, best_draft.parsed.summary)
         if reviewed.parsed.outcome == "PASS":
             print(f"Rewrite {i+1} of {max_attempts} passes: {best_draft}")
-            return best_draft.parsed.user_acceptance_criteria
+            return best_draft.parsed
 
     print("Unable to rewrite the user acceptance criteria. Returning original attempt.")
-    return best_draft.parsed.user_acceptance_criteria
+    return best_draft.parsed
 
 
 # proposal = """
