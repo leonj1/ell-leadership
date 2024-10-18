@@ -1,14 +1,12 @@
 import sys
-print("Python path:", sys.path)
-
-try:
-    from fastapi import FastAPI
-    from fastapi.middleware.cors import CORSMiddleware
-    from fastapi.staticfiles import StaticFiles
-    from pydantic import BaseModel
-    print("Successfully imported FastAPI and Pydantic")
-except ImportError as e:
-    print(f"Error importing FastAPI or Pydantic: {e}")
+import uuid
+from fastapi import FastAPI, WebSocket, Request, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from typing import List, Dict, Optional
+import asyncio
 
 try:
     from review_acceptance_criteria import UserAcceptanceSummary, summarize_problem, product_owner, user_acceptance_criteria_recommendation_engine
@@ -49,6 +47,13 @@ class GenerateOutput(BaseModel):
     acceptance_criteria: str
     cross_team_dependencies: str = ''
 
+class RequestStatus(BaseModel):
+    status: str
+    results: Optional[Dict] = None
+
+# Store for request statuses
+request_statuses: Dict[str, RequestStatus] = {}
+
 @app.post("/generate", response_model=GenerateOutput)
 async def generate(input: GenerateInput):
     recommendation = user_acceptance_criteria_recommendation_engine(input.goal, input.voice, input.targetAudience, input.draftUAC)
@@ -69,10 +74,37 @@ async def generate(input: GenerateInput):
         cross_team_dependencies=cross_team_dependencies
     )
 
-@app.post("/review", response_model=UserAcceptanceSummary)
+@app.post("/review")
 async def review(acceptance_criteria: AcceptanceCriteria):
-    summary = product_owner(acceptance_criteria.contents)
-    return summary.parsed
+    request_id = str(uuid.uuid4())
+    request_statuses[request_id] = RequestStatus(status="Started")
+
+    async def process_review():
+        try:
+            def update_status(message: str):
+                request_statuses[request_id].status = message
+
+            summary = await product_owner_async(acceptance_criteria.contents, update_status=update_status)
+            request_statuses[request_id].results = summary.parsed.dict()
+        except Exception as e:
+            request_statuses[request_id].status = f"Error: {str(e)}"
+
+    asyncio.create_task(process_review())
+    return {"request_id": request_id}
+
+@app.get("/request/{request_id}")
+async def get_request_status(request_id: str):
+    # log the request_id
+    print(f"Request ID: {request_id}")
+    if request_id not in request_statuses:
+        raise HTTPException(status_code=404, detail="Request not found")
+    return request_statuses[request_id]
 
 # Mount the React app's build directory
 app.mount("/", StaticFiles(directory="frontend/build", html=True), name="static")
+
+async def product_owner_async(contents: str, update_status):
+    def run_product_owner():
+        return product_owner(contents, update_status=update_status)
+    
+    return await asyncio.to_thread(run_product_owner)

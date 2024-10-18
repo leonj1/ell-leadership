@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button, Spinner, Card } from 'react-bootstrap';
 
@@ -7,20 +7,63 @@ function ForAnotherTeamView() {
   const [response, setResponse] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState(null);
+  const [statusMessages, setStatusMessages] = useState([]);
+  const [requestId, setRequestId] = useState(null);
+  const [requestSent, setRequestSent] = useState(false);
+
+  useEffect(() => {
+    let intervalId;
+    if (requestId) {
+      intervalId = setInterval(async () => {
+        try {
+          // if requestSent is true, skip
+          if (requestSent) {
+            return;
+          }
+          setRequestSent(true);
+          const result = await axios.get(`http://10.1.1.144:8110/request/${requestId}`);
+          // ensure prevMessages are unique
+          setStatusMessages(prevMessages => [...new Set([...prevMessages, result.data.status])]);
+          setRequestSent(false);
+          console.log('Status Messages:', result.data.status);
+          if (result.data.results) {
+            setResponse(result.data.results);
+            setIsLoading(false);
+            clearInterval(intervalId);
+            setRequestSent(false);
+            console.log('Response:', result.data.results);
+          }
+        } catch (error) {
+          console.error('Error fetching status:', error);
+          setIsLoading(false);
+          clearInterval(intervalId);
+          setRequestSent(false);
+        }
+      }, 1000);
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [requestId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setResponse(null);
+    setStatusMessages([]);
+    setRequestId(null);
     try {
       const result = await axios.post('http://10.1.1.144:8110/review', {
         contents: userAcceptance
       });
-      setResponse(result.data);
+      setRequestId(result.data.request_id);
+      console.log('Request ID:', result.data.request_id);
     } catch (error) {
       console.error('Error:', error);
-      // Handle error (you might want to set an error state and display it)
-    } finally {
+      setStatusMessages(prevMessages => [...prevMessages, 'An error occurred during the review.']);
       setIsLoading(false);
     }
   };
@@ -60,6 +103,22 @@ function ForAnotherTeamView() {
           )}
         </button>
       </form>
+      {statusMessages.length > 0 && (
+        <div className="alert alert-info mt-3">
+          <strong>Status Updates:</strong>
+          <ul className="mb-0">
+            {statusMessages.map((message, index) => (
+              <li key={index}>{message}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {isLoading && statusMessages.length === 0 && (
+        <div className="alert alert-info mt-3">
+          <strong>Status Updates:</strong>
+          <p>Waiting for updates...</p>
+        </div>
+      )}
 
       {response && (
         <Card className={`mt-4 ${response.outcome === 'PASS' ? 'border-success' : 'border-danger'}`}>

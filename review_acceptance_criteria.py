@@ -148,59 +148,36 @@ Only respond in 1 paragraph.
     return f"Determine if the following problem includes any redundant information: {goal}"
 
 @ell.complex(model="gpt-4o-2024-08-06", response_format=UserAcceptanceSummary, temperature=0.1)
-def product_owner_junior(user_acceptance_criteria : str):
+def product_owner_junior(user_acceptance_criteria: str, update_status):
     """
-An experienced product owner (PO) possesses a unique blend of business acumen, technical 
-understanding, and leadership skills. They are masters of communication, adept at bridging 
-the gap between stakeholders, development teams, and end-users.
-Key skills of an experienced PO include:
-
-Strategic thinking: Ability to align product vision with business goals
-User empathy: Deep understanding of user needs and pain points
-Prioritization: Skill in managing backlog and making tough trade-off decisions
-Agile methodology expertise: Proficiency in Scrum or other Agile frameworks
-Data analysis: Capability to make data-driven decisions
-Technical aptitude: Sufficient understanding to communicate effectively with developers
-Stakeholder management: Talent for balancing diverse interests and expectations
-Market awareness: Knowledge of industry trends and competitive landscape
-Problem-solving: Creativity in addressing complex challenges
-Adaptability: Flexibility to pivot strategies based on feedback and market changes
-
-When reviewing user acceptance criteria, an experienced PO looks for:
-
-Clarity and specificity: Ensuring criteria are unambiguous and measurable
-User-centricity: Confirming that criteria address real user needs and add value
-Feasibility: Assessing whether criteria are technically and economically viable
-Testability: Ensuring criteria can be objectively verified
-Alignment with product vision: Checking that criteria support overall product goals
-Completeness: Verifying that all necessary scenarios are covered
-Consistency: Ensuring criteria don't contradict each other or existing features
-Prioritization: Evaluating the importance and urgency of each criterion
-Dependencies: Identifying any reliance on other features or systems
-Compliance: Confirming adherence to legal, security, and accessibility standards
-
-A skilled PO balances these elements to create acceptance criteria that guide development 
-towards a product that delights users, meets business objectives, and maintains technical 
-integrity. They continually refine these criteria based on feedback, market changes, and 
-emerging opportunities, ensuring the product remains competitive and valuable.
-You write with an active voice.
+    An experienced product owner (PO) possesses a unique blend of business acumen, technical 
+    understanding, and leadership skills. They are masters of communication, adept at bridging 
+    the gap between stakeholders, development teams, and end-users.
+    ...
+    You write with an active voice.
     """
+    update_status("Checking if the problem is solvable...")
     is_solveable = is_solveable_problem(user_acceptance_criteria)
+    
+    update_status("Checking if the problem is complete...")
     is_complete = is_a_complete_problem(user_acceptance_criteria)
+    
+    update_status("Checking if the problem is not redundant...")
     is_not_redundant_response = is_not_redundant(user_acceptance_criteria)
 
+    update_status("Finalizing results...")
     return f"""
-Determine if the user acceptance criteria is solvable, complete, and does not include 
-reduntant information. Use pre-screened review from others to ensure that the 
-user acceptance criteria is clear, specific, and does not include redundant information. 
-If the user acceptance critera does not PASS, provide a list of possible alternatives that 
-would generate a PASS outcome.
-Write in your voice: {[
-        user_acceptance_criteria,
-        is_solveable,
-        is_complete,
-        is_not_redundant_response]}.
-        """
+    Determine if the user acceptance criteria is solvable, complete, and does not include 
+    redundant information. Use pre-screened review from others to ensure that the 
+    user acceptance criteria is clear, specific, and does not include redundant information. 
+    If the user acceptance criteria does not PASS, provide a list of possible alternatives that 
+    would generate a PASS outcome.
+    Write in your voice: {[
+            user_acceptance_criteria,
+            is_solveable,
+            is_complete,
+            is_not_redundant_response]}.
+            """
 
 def attempt_rewrite(user_acceptance_criteria, max_attempts=3):
     default_response = ""
@@ -215,21 +192,39 @@ def attempt_rewrite(user_acceptance_criteria, max_attempts=3):
         default_response = rewrite.parsed.user_acceptance_criteria
     return default_response
 
-def product_owner(user_acceptance_criteria : str):
+def product_owner(user_acceptance_criteria: str, update_status=None):
     is_sentence_response = is_sentence(user_acceptance_criteria)
     if is_sentence_response.parsed.is_sentence == "NO":
         return f"The user acceptance criteria is not a sentence. Please rewrite the user acceptance criteria as a sentence."
 
-    result = product_owner_junior(user_acceptance_criteria)
+    result = product_owner_junior(user_acceptance_criteria, update_status)
     if result.parsed.outcome == "PASS":
-        print("Original user acceptance criteria passed on the first try.")
+        if update_status:
+            update_status("Original user acceptance criteria passed on the first try.")
         return result
 
-    print("The original user acceptance criteria does not pass. Attempting to rewrite...")
-    rewrite = attempt_rewrite(user_acceptance_criteria)
+    if update_status:
+        update_status("The original user acceptance criteria does not pass. Attempting to rewrite...")
+    rewrite = attempt_rewrite(user_acceptance_criteria, update_status)
     if rewrite:
         result.parsed.possible_alternatives = [rewrite]
     return result
+
+def attempt_rewrite(user_acceptance_criteria, update_status=None, max_attempts=3):
+    default_response = ""
+    for i in range(max_attempts):
+        if update_status:
+            update_status(f"Attempt {i+1} of {max_attempts} to rewrite the user acceptance criteria...")
+        rewrite = rewrite_user_acceptance_criteria(user_acceptance_criteria)
+        if update_status:
+            update_status(f"Checking rewrite: {rewrite}")
+        reviewed = product_owner_junior(rewrite, update_status)
+        if reviewed.parsed.outcome == "PASS":
+            if update_status:
+                update_status(f"Rewrite {i+1} of {max_attempts} passes: {rewrite}")
+            return rewrite
+        default_response = rewrite.parsed.user_acceptance_criteria
+    return default_response
 
 def user_acceptance_criteria_recommendation_engine(goal: str, voice: str, audience: str, proposal: str):
     ideas = generate_user_acceptance_criteria(goal, voice, audience, proposal, api_params=(dict(n=5)))
