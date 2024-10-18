@@ -1,4 +1,6 @@
 import ell
+import groq
+import os
 from typing import List
 from pydantic import BaseModel, Field
 from rich.table import Table
@@ -50,10 +52,19 @@ class UserAcceptanceCriteriaChosen(BaseModel):
     outcome: str = Field(description="The outcome of the problem written as PASS or FAIL")
     confidence_score: int = Field(description="The confidence score this is a complete problem. Scores can be between 1-100.")
 
-ell.init(verbose=True)
+# ell.init(verbose=True)
+ell.init(verbose=True, store='./logdir')
 
+# (Recomended) Option 1: Register all groq models.
+# ell.models.groq.register() # use GROQ_API_KEY env var
+# get GROQ_API_KEY from environment variable
+groq_api_key = os.environ.get("GROQ_API_KEY")
+ell.models.groq.register(api_key=groq_api_key)
 
-@ell.complex(model="gpt-4o-2024-08-06", response_format=UserAcceptanceCriteriaDraft, temperature=0.5)
+client = groq.Groq()
+
+# @ell.complex(model="gpt-4o-2024-08-06", response_format=UserAcceptanceCriteriaDraft, temperature=0.5)
+@ell.complex(model="llama-3.1-70b-versatile", response_format=UserAcceptanceCriteriaDraft, temperature=0.5, client=client)
 def generate_user_acceptance_criteria(goal: str, your_role: str, audience: str, proposal: str):
     return [
         ell.system(f"""
@@ -67,31 +78,36 @@ Write in an active voice.
 """)
     ]
 
-@ell.simple(model="gpt-4o-mini", temperature=0.4)
+# @ell.simple(model="gpt-4o-mini", temperature=0.4)
+@ell.simple(model="llama-3.1-70b-versatile", temperature=0.4, client=client)
 def write_a_draft_of_a_user_acceptance_criteria(idea : str):
     """You are an adept technical writer."""
     return f"Write a succint user acceptance criteria that is achievable, complete, and does not include redundant information: {idea}."
 
-@ell.complex(model="gpt-4o-2024-08-06", response_format=UserAcceptanceCriteriaDraft, temperature=0.1)
+# @ell.complex(model="gpt-4o-2024-08-06", response_format=UserAcceptanceCriteriaDraft, temperature=0.1)
+@ell.complex(model="llama-3.1-70b-versatile", response_format=UserAcceptanceCriteriaDraft, temperature=0.1, client=client)
 def choose_the_best_draft(drafts : List[str]):
     """You are an expert editor of technical documents."""
     return f"Choose the best draft from the following list: {'\n'.join(drafts)}."
 
-@ell.complex(model="gpt-4o-2024-08-06", response_format=UserAcceptanceSummary, temperature=0.1)
+# @ell.complex(model="gpt-4o-2024-08-06", response_format=UserAcceptanceSummary, temperature=0.1)
+@ell.complex(model="llama-3.1-70b-versatile", response_format=UserAcceptanceSummary, temperature=0.4, client=client)
 def summarize_user_acceptance_criteria(audience: str, proposal: str):
     return [
         ell.system(f"{audience}"),
         ell.user(f"Write in an active voice.: {proposal}.")
     ]
 
-@ell.complex(model="gpt-4o-mini", response_format=SenteceCheck, temperature=0.1)
+# @ell.complex(model="gpt-4o-mini", response_format=SenteceCheck, temperature=0.1)
+@ell.complex(model="llama-3.1-8b-instant", response_format=SenteceCheck, temperature=0.1, client=client)
 def is_sentence(input : str):
     """
 You are an english professor.
 """
     return f"Determine if the following input is a sentence: {input}"
 
-@ell.complex(model="gpt-4o-mini", response_format=RewrittenUserAcceptanceCriteria, temperature=1.0)
+# @ell.complex(model="gpt-4o-mini", response_format=RewrittenUserAcceptanceCriteria, temperature=1.0)
+@ell.complex(model="llama-3.1-8b-instant", response_format=RewrittenUserAcceptanceCriteria, temperature=0.1, client=client)
 def rewrite_user_acceptance_criteria(criteria: str):
     """
     You are a Technical writers that creates instruction manuals, how-to guides, 
@@ -107,14 +123,16 @@ Analyze the following user acceptance criteria and rewrite it in a way that is c
 The rewritten user acceptance criteria should be written from the point of view of the original author. Not speaking to the orignal author. {criteria}
 """
 
-@ell.simple(model="gpt-4o-mini", temperature=1.0)
+# @ell.simple(model="gpt-4o-mini", temperature=1.0)
+@ell.simple(model="llama-3.1-8b-instant", temperature=0.1, client=client)
 def summarize_problem(goal: str):
     """
     You are a product owner that summarizes the problem statement into a single sentence.
     """
     return f"Summarize the problem statement into a single sentence: {goal}"
 
-@ell.complex(model="gpt-4o-mini", response_format=SolveableProblem, temperature=1.0)
+# @ell.complex(model="gpt-4o-mini", response_format=SolveableProblem, temperature=1.0)
+@ell.complex(model="llama-3.1-8b-instant", response_format=SolveableProblem, temperature=1.0, client=client)
 def is_solveable_problem(goal : str):
     """
 You are a senior software developer with expertise in user acceptance criteria documentation.
@@ -125,7 +143,8 @@ Only respond in 1 paragraph.
 """
     return f"Determine if the following problem can be independently solved by a single software developer: {goal}"
 
-@ell.complex(model="gpt-4o-mini", response_format=CompleteProblem, temperature=1.0)
+# @ell.complex(model="gpt-4o-mini", response_format=CompleteProblem, temperature=1.0)
+@ell.complex(model="llama-3.1-8b-instant", response_format=CompleteProblem,temperature=1.0, client=client)
 def is_a_complete_problem(goal : str):
     """
 You are a senior software developer with expertise in user acceptance criteria documentation.
@@ -137,7 +156,8 @@ Only respond in 1 paragraph.
 """
     return f"Determine if the following problem is complete: {goal}"
 
-@ell.complex(model="gpt-4o-mini", response_format=NotRedundantProblem, temperature=1.0)
+# @ell.complex(model="gpt-4o-mini", response_format=NotRedundantProblem, temperature=1.0)
+@ell.complex(model="llama-3.1-8b-instant", response_format=NotRedundantProblem,temperature=1.0, client=client)
 def is_not_redundant(goal : str):
     """
 You are a senior software developer with expertise in user acceptance criteria documentation.
@@ -147,7 +167,8 @@ Only respond in 1 paragraph.
 """
     return f"Determine if the following problem includes any redundant information: {goal}"
 
-@ell.complex(model="gpt-4o-2024-08-06", response_format=UserAcceptanceSummary, temperature=0.1)
+# @ell.complex(model="gpt-4o-2024-08-06", response_format=UserAcceptanceSummary, temperature=0.1)
+@ell.complex(model="llama-3.1-70b-versatile", response_format=UserAcceptanceSummary,temperature=0.1, client=client)
 def product_owner_junior(user_acceptance_criteria : str):
     """
 An experienced product owner (PO) possesses a unique blend of business acumen, technical 
