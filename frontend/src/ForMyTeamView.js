@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Spinner } from 'react-bootstrap';
 import axios from 'axios';
+import GeneratedResponse from './GeneratedResponse';
 
 function ForMyTeamView() {
   const [targetAudience, setTargetAudience] = useState('');
@@ -162,31 +163,11 @@ function ForMyTeamView() {
         </div>
       )}
 
-      {response && (
-        <div className="mt-4">
-          <h3>Generated User Acceptance Criteria</h3>
-          <div className="mb-3">
-            <strong>Summary:</strong>
-            <p>{response.summary}</p>
-          </div>
-          <div className="mb-3">
-            <strong>Acceptance Criteria:</strong>
-            <p>{response.acceptance_criteria}</p>
-          </div>
-          <div className="mb-3">
-            <strong>Cross-team Dependencies:</strong>
-            <p>{response.cross_team_dependencies}</p>
-          </div>
-          <Button
-            variant="outline-secondary"
-            size="sm"
-            onClick={() => copyToClipboard(JSON.stringify(response, null, 2), 'all')}
-          >
-            📋 Copy All
-          </Button>
-          {copiedIndex === 'all' && <span className="text-success ms-2">Copied!</span>}
-        </div>
-      )}
+      {response && 
+      <GeneratedResponse 
+        response={response} 
+        onCopy={copyToClipboard} 
+        copiedIndex={copiedIndex} />}
     </div>
   );
 }
