@@ -34,7 +34,11 @@ class UserAcceptanceSummary(BaseModel):
     confidence_score: int = Field(description="The confidence score this is a complete problem. Scores can be between 1-100.")
     recommendation: str = Field(description="The summary of why this user acceptance criteria is accepted or rejected.")
     response: str = Field(description="The response from the product owner to the originator of the user acceptance criteria telling them what they need to change for the acceptance criteria to be accepted.")
-    possible_alternatives: List[str] = Field(description="The list of alternate user acceptance criteria, using the original as a starting point, that is detailed and specific. Each re-written example should be able to generate a PASS outcome.")
+    possible_alternatives: List[str] = Field(description="""
+                                             The list of alternate user acceptance criteria, using the original as a starting point, 
+                                             that is detailed and specific. Each re-written example should be able to generate a PASS outcome. 
+                                             Each entry must be a sentence exceeding 10 words.
+                                             """)
     
 class TeamDependencies(BaseModel):
     team_name: str = Field(description="The name of the team that is expected to complete the user acceptance criteria.")
@@ -165,7 +169,7 @@ def product_owner_junior(user_acceptance_criteria: str, update_status):
     update_status("Checking if the problem is not redundant...")
     is_not_redundant_response = is_not_redundant(user_acceptance_criteria)
 
-    update_status("Finalizing results...")
+    update_status("Determining if the user acceptance criteria is solvable, complete, and does not include redundant information...")
     return f"""
     Determine if the user acceptance criteria is solvable, complete, and does not include 
     redundant information. Use pre-screened review from others to ensure that the 
@@ -179,18 +183,18 @@ def product_owner_junior(user_acceptance_criteria: str, update_status):
             is_not_redundant_response]}.
             """
 
-def attempt_rewrite(user_acceptance_criteria, max_attempts=3):
-    default_response = ""
-    for i in range(max_attempts):
-        print(f"Attempt {i+1} of {max_attempts} to rewrite the user acceptance criteria...")
-        rewrite = rewrite_user_acceptance_criteria(user_acceptance_criteria)
-        print(f"Checking rewrite: {rewrite}")
-        reviewed = product_owner_junior(rewrite)
-        if reviewed.parsed.outcome == "PASS":
-            print(f"Rewrite {i+1} of {max_attempts} passes: {rewrite}")
-            return rewrite
-        default_response = rewrite.parsed.user_acceptance_criteria
-    return default_response
+# def attempt_rewrite(user_acceptance_criteria, max_attempts=3):
+#     default_response = ""
+#     for i in range(max_attempts):
+#         print(f"Attempt {i+1} of {max_attempts} to rewrite the user acceptance criteria...")
+#         rewrite = rewrite_user_acceptance_criteria(user_acceptance_criteria)
+#         print(f"Checking rewrite: {rewrite}")
+#         reviewed = product_owner_junior(rewrite)
+#         if reviewed.parsed.outcome == "PASS":
+#             print(f"Rewrite {i+1} of {max_attempts} passes: {rewrite}")
+#             return rewrite
+#         default_response = rewrite.parsed.user_acceptance_criteria
+#     return default_response
 
 def product_owner(user_acceptance_criteria: str, update_status=None):
     is_sentence_response = is_sentence(user_acceptance_criteria)

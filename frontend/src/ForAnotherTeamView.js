@@ -130,20 +130,24 @@ function ForAnotherTeamView() {
             <p><strong>Response:</strong> {response.response}</p>
             {response.possible_alternatives && response.possible_alternatives.length > 0 && (
               <>
-                <p><strong>Possible Alternatives:</strong></p>
+                {response.possible_alternatives.length > 1 && (
+                  <p><strong>Possible Alternatives:</strong></p>
+                )}
                 <ul className="list-unstyled">
-                  {response.possible_alternatives.map((alternative, index) => (
+                  {response.possible_alternatives && 
+                  response.possible_alternatives.length > 1 && 
+                  response.possible_alternatives.map((alternative, index) => (
                     <li key={index} className="d-flex align-items-center mb-2">
                       <Button
                         variant="outline-secondary"
                         size="sm"
                         className="me-2"
-                        onClick={() => copyToClipboard(alternative, index)}
+                        onClick={() => copyToClipboard(alternative, `alt-${index}`)}
                       >
                         📋
                       </Button>
                       <span>{alternative}</span>
-                      {copiedIndex === index && (
+                      {copiedIndex === `alt-${index}` && (
                         <span className="text-success ms-2">Copied!</span>
                       )}
                     </li>
