@@ -3,12 +3,14 @@ import { ListGroup } from 'react-bootstrap';
 
 function AcceptanceCriteria({ criteria }) {
   const criteriaList = criteria.split(/\d+\./).filter(item => item.trim() !== '');
+  // remove \n from each item in criteriaList
+  const cleanedCriteriaList = criteriaList.map(item => item.replace(/\n/g, ''));
 
   return (
     <div className="mb-3">
       <strong>Acceptance Criteria:</strong>
       <ListGroup as="ol" numbered className="mt-2">
-        {criteriaList.map((item, index) => (
+        {cleanedCriteriaList.map((item, index) => (
           <ListGroup.Item
             as="li"
             key={index}
