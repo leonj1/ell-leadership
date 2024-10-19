@@ -231,9 +231,9 @@ def attempt_rewrite(user_acceptance_criteria, update_status=None, max_attempts=3
     return default_response
 
 def user_acceptance_criteria_recommendation_engine(goal: str, voice: str, audience: str, proposal: str, update_status):
-    update_status("Generating user acceptance criteria...")
+    update_status("Generating multiple user acceptance criterias...")
     ideas = generate_user_acceptance_criteria(goal, voice, audience, proposal, api_params=(dict(n=5)))
-    update_status("Writing a draft of a user acceptance criteria...")
+    update_status("Writing drafts for each user acceptance criteria...")
     drafts = [write_a_draft_of_a_user_acceptance_criteria(idea) for idea in ideas]
     update_status("Choosing the best draft...")
     best_draft = choose_the_best_draft(drafts)
