@@ -15,6 +15,8 @@ function ForMyTeamView() {
   const [requestId, setRequestId] = useState(null);
   const [requestSent, setRequestSent] = useState(false);
   const [prevResponse, setPrevResponse] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 60;
 
   const bottomRef = useRef(null);
 
@@ -22,6 +24,13 @@ function ForMyTeamView() {
     let intervalId;
     if (requestId) {
       intervalId = setInterval(async () => {
+        if (retryCount >= MAX_RETRIES) {
+          clearInterval(intervalId);
+          setIsLoading(false);
+          setStatusMessages(prevMessages => [...prevMessages, "Max retries reached. Please try again."]);
+          return;
+        }
+
         try {
           if (requestSent) {
             return;
@@ -31,18 +40,25 @@ function ForMyTeamView() {
           setStatusMessages(prevMessages => [...new Set([...prevMessages, result.data.status])]);
           setRequestSent(false);
           console.log('Status Messages:', result.data.status);
+          console.log('Result:', result.data.results);
+          console.log('Retry Count:', retryCount);
           if (result.data.results) {
+            console.log('Clearing things');
             setResponse(result.data.results);
             setIsLoading(false);
-            clearInterval(intervalId);
             setRequestSent(false);
             console.log('Response:', result.data.results);
+            setRetryCount(MAX_RETRIES + 1);
+            clearInterval(intervalId);  // Move this line here
+          } else {
+            setRetryCount(prevCount => prevCount + 1);
           }
         } catch (error) {
           console.error('Error fetching status:', error);
           setIsLoading(false);
           clearInterval(intervalId);
           setRequestSent(false);
+          setStatusMessages(prevMessages => [...prevMessages, "An error occurred while fetching the status."]);
         }
       }, 1000);
     }
@@ -52,7 +68,7 @@ function ForMyTeamView() {
         clearInterval(intervalId);
       }
     };
-  }, [requestId, requestSent]);
+  }, [requestId, requestSent, retryCount]);
 
   useEffect(() => {
     if (response) {
@@ -73,6 +89,7 @@ function ForMyTeamView() {
     setResponse(null);
     setStatusMessages([]);
     setRequestId(null);
+    setRetryCount(0);  // Reset retry count
     try {
       const result = await axios.post('http://10.1.1.144:8110/generate', {
         targetAudience,
