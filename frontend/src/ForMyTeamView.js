@@ -114,7 +114,7 @@ function ForMyTeamView() {
             id="voice"
             value={voice}
             onChange={(e) => setVoice(e.target.value)}
-            placeholder="e.g., Professional, Friendly, Technical"
+            placeholder="e.g., I am a product owner for an email platform team."
           />
         </div>
         <div className="mb-3">
@@ -125,7 +125,7 @@ function ForMyTeamView() {
             id="targetAudience"
             value={targetAudience}
             onChange={(e) => setTargetAudience(e.target.value)}
-            placeholder="e.g., Development Team, Product Managers"
+            placeholder="e.g., Software developers, application support agents"
           />
         </div>
         <div className="mb-3">
