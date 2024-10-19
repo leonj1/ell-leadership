@@ -87,6 +87,36 @@ function ForMyTeamView() {
   return (
     <div>
       <form onSubmit={handleGenerate}>
+      <div className="mb-3">
+        <label className="form-label d-block">Goal</label>
+        {['Initiative', 'Epic', 'Feature', 'User Story'].map((option) => (
+          <div key={option} className="form-check">
+            <input
+              className="form-check-input"
+              type="radio"
+              name="goal"
+              id={`goal-${option}`}
+              value={option}
+              checked={goal === option}
+              onChange={(e) => setGoal(e.target.value)}
+            />
+            <label className="form-check-label" htmlFor={`goal-${option}`}>
+              {option}
+            </label>
+          </div>
+        ))}
+      </div>
+        <div className="mb-3">
+          <label htmlFor="voice" className="form-label">Voice</label>
+          <input
+            type="text"
+            className="form-control"
+            id="voice"
+            value={voice}
+            onChange={(e) => setVoice(e.target.value)}
+            placeholder="e.g., Professional, Friendly, Technical"
+          />
+        </div>
         <div className="mb-3">
           <label htmlFor="targetAudience" className="form-label">Target Audience</label>
           <input
@@ -108,31 +138,6 @@ function ForMyTeamView() {
             placeholder="Enter your draft user acceptance criteria here"
             rows="4"
           ></textarea>
-        </div>
-        <div className="mb-3">
-          <label htmlFor="voice" className="form-label">Voice</label>
-          <input
-            type="text"
-            className="form-control"
-            id="voice"
-            value={voice}
-            onChange={(e) => setVoice(e.target.value)}
-            placeholder="e.g., Professional, Friendly, Technical"
-          />
-        </div>
-        <div className="mb-3">
-          <label htmlFor="goal" className="form-label">Goal</label>
-          <select
-            className="form-select"
-            id="goal"
-            value={goal}
-            onChange={(e) => setGoal(e.target.value)}
-          >
-            <option value="Initiative">Initiative</option>
-            <option value="Epic">Epic</option>
-            <option value="Feature">Feature</option>
-            <option value="User Story">User Story</option>
-          </select>
         </div>
         <button type="submit" className="btn btn-primary" disabled={isLoading}>
           {isLoading ? (
