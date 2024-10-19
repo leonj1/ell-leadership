@@ -12,7 +12,7 @@ function ForAnotherTeamView() {
   const [requestSent, setRequestSent] = useState(false);
 
   useEffect(() => {
-    let intervalId;
+    var intervalId;
     if (requestId) {
       intervalId = setInterval(async () => {
         try {
@@ -22,17 +22,18 @@ function ForAnotherTeamView() {
           }
           setRequestSent(true);
           const result = await axios.get(`http://10.1.1.144:8110/request/${requestId}`);
-          // ensure prevMessages are unique
-          setStatusMessages(prevMessages => [...new Set([...prevMessages, result.data.status])]);
-          setRequestSent(false);
-          console.log('Status Messages:', result.data.status);
-          if (result.data.results) {
-            setResponse(result.data.results);
-            setIsLoading(false);
-            clearInterval(intervalId);
-            setRequestSent(false);
-            console.log('Response:', result.data.results);
+          if (result.data && result.data.status) {
+            // ensure prevMessages are unique
+            setStatusMessages(prevMessages => [...new Set([...prevMessages, result.data.status])]);
+            console.log('Status Messages:', result.data.status);
+            if (result.data.results) {
+              setResponse(result.data.results);
+              setIsLoading(false);
+              clearInterval(intervalId);
+              console.log('Response:', result.data.results);
+            }
           }
+          setRequestSent(false);
         } catch (error) {
           console.error('Error fetching status:', error);
           setIsLoading(false);
@@ -63,7 +64,7 @@ function ForAnotherTeamView() {
       console.log('Request ID:', result.data.request_id);
     } catch (error) {
       console.error('Error:', error);
-      setStatusMessages(prevMessages => [...prevMessages, 'An error occurred during the review.']);
+      setStatusMessages(prevMessages => [...prevMessages, `Error: ${error.message}`]);
       setIsLoading(false);
     }
   };
@@ -82,6 +83,7 @@ function ForAnotherTeamView() {
 
   return (
     <div>
+      <h2>For Another Team</h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
           <textarea
@@ -90,6 +92,7 @@ function ForAnotherTeamView() {
             onChange={(e) => setUserAcceptance(e.target.value)}
             placeholder="Create a link to facebook.com"
             rows="4"
+            aria-label="User Acceptance Criteria"
           ></textarea>
         </div>
         <button type="submit" className="btn btn-primary" disabled={isLoading}>
