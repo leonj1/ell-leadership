@@ -37,6 +37,13 @@ function ForMyTeamView() {
           }
           setRequestSent(true);
           const result = await axios.get(`http://10.1.1.144:8110/request/${requestId}`);
+          // if result status code is not 200 then stop the interval
+          if (result.status !== 200) {
+            clearInterval(intervalId);
+            setIsLoading(false);
+            setStatusMessages(prevMessages => [...prevMessages, "An error occurred while fetching the status."]);
+            return;
+          }
           setStatusMessages(prevMessages => [...new Set([...prevMessages, result.data.status])]);
           setRequestSent(false);
           console.log('Status Messages:', result.data.status);
