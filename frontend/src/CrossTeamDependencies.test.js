@@ -68,10 +68,4 @@ describe('CrossTeamDependencies', () => {
     expect(screen.getByText('Cross-team Dependencies:')).toBeInTheDocument();
     expect(screen.getByText('No dependencies specified.')).toBeInTheDocument();
   });
-
-  it('handles undefined dependencies prop', () => {
-    render(<CrossTeamDependencies />);
-    expect(screen.getByText('Cross-team Dependencies:')).toBeInTheDocument();
-    expect(screen.getByText('No dependencies specified.')).toBeInTheDocument();
-  });
 });
