@@ -26,5 +26,9 @@ frontend-install:
 frontend-build: frontend-install
 	cd frontend && npm run build
 
+test:
+# run all tests even if they all passed previously
+	cd frontend && npm test -- --watchAll=false
+
 dev: frontend-build
 	uvicorn main:app --reload --port $(PORT)
