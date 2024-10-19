@@ -12,7 +12,7 @@ function ForAnotherTeamView() {
   const [requestSent, setRequestSent] = useState(false);
 
   useEffect(() => {
-    var intervalId;
+    let intervalId;
     if (requestId) {
       intervalId = setInterval(async () => {
         try {
