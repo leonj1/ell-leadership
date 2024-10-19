@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Button, Spinner } from 'react-bootstrap';
+import { Spinner } from 'react-bootstrap';
 import axios from 'axios';
 import GeneratedResponse from './GeneratedResponse';
 
@@ -27,7 +27,9 @@ function ForMyTeamView() {
         if (retryCount >= MAX_RETRIES) {
           clearInterval(intervalId);
           setIsLoading(false);
-          setStatusMessages(prevMessages => [...prevMessages, "Max retries reached. Please try again."]);
+          if (retryCount !== MAX_RETRIES + 10) {
+            setStatusMessages(prevMessages => [...prevMessages, "Max retries reached. Please try again."]);
+          }
           return;
         }
 
@@ -55,7 +57,7 @@ function ForMyTeamView() {
             setIsLoading(false);
             setRequestSent(false);
             console.log('Response:', result.data.results);
-            setRetryCount(MAX_RETRIES + 1);
+            setRetryCount(MAX_RETRIES + 10);
             clearInterval(intervalId);  // Move this line here
           } else {
             setRetryCount(prevCount => prevCount + 1);
