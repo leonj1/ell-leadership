@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from 'react-bootstrap';
 import AcceptanceCriteria from './AcceptanceCriteria';
+import CrossTeamDependencies from './CrossTeamDependencies';
 
 function GeneratedResponse({ response, onCopy, copiedIndex }) {
   return (
@@ -11,10 +12,7 @@ function GeneratedResponse({ response, onCopy, copiedIndex }) {
         <p>{response.summary}</p>
       </div>
       <AcceptanceCriteria criteria={response.acceptance_criteria} />
-      <div className="mb-3">
-        <strong>Cross-team Dependencies:</strong>
-        <p>{response.cross_team_dependencies}</p>
-      </div>
+      <CrossTeamDependencies dependencies={response.cross_team_dependencies} />
       <Button
         variant="outline-secondary"
         size="sm"
