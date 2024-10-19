@@ -47,25 +47,25 @@ function ForMyTeamView() {
       }, 1000);
     }
 
-    useEffect(() => {
-      if (response) {
-        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, [response]);
-
     return () => {
       if (intervalId) {
         clearInterval(intervalId);
       }
     };
-  }, [requestId]);
+  }, [requestId, requestSent]);
+
+  useEffect(() => {
+    if (response) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [response]);
 
   useEffect(() => {
     if (response && !prevResponse) {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
     setPrevResponse(response);
-  }, [response]);
+  }, [response, prevResponse]);
 
   const handleGenerate = async (e) => {
     e.preventDefault();
