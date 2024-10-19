@@ -226,10 +226,14 @@ def attempt_rewrite(user_acceptance_criteria, update_status=None, max_attempts=3
         default_response = rewrite.parsed.user_acceptance_criteria
     return default_response
 
-def user_acceptance_criteria_recommendation_engine(goal: str, voice: str, audience: str, proposal: str):
+def user_acceptance_criteria_recommendation_engine(goal: str, voice: str, audience: str, proposal: str, update_status):
+    update_status("Generating user acceptance criteria...")
     ideas = generate_user_acceptance_criteria(goal, voice, audience, proposal, api_params=(dict(n=5)))
+    update_status("Writing a draft of a user acceptance criteria...")
     drafts = [write_a_draft_of_a_user_acceptance_criteria(idea) for idea in ideas]
+    update_status("Choosing the best draft...")
     best_draft = choose_the_best_draft(drafts)
+    update_status("Summarizing user acceptance criteria...")
     result = summarize_user_acceptance_criteria(audience, best_draft.parsed.summary)
     if result.parsed.outcome == "PASS":
         print("Original user acceptance criteria passed on the first try.")
@@ -239,9 +243,13 @@ def user_acceptance_criteria_recommendation_engine(goal: str, voice: str, audien
     print("The original user acceptance criteria does not pass. Attempting to rewrite...")
     for i in range(max_attempts):
         print(f"Attempt {i+1} of {max_attempts} to rewrite the user acceptance criteria...")
+        update_status(f"Attempt {i+1} of {max_attempts} to rewrite the user acceptance criteria...")
         ideas = generate_user_acceptance_criteria(goal, voice, audience, proposal, api_params=(dict(n=3)))
+        update_status("Writing a draft of a user acceptance criteria...")
         drafts = [write_a_draft_of_a_user_acceptance_criteria(idea) for idea in ideas]
+        update_status("Choosing the best draft...")
         best_draft = choose_the_best_draft(drafts)
+        update_status("Summarizing user acceptance criteria...")
         reviewed = summarize_user_acceptance_criteria(audience, best_draft.parsed.summary)
         if reviewed.parsed.outcome == "PASS":
             print(f"Rewrite {i+1} of {max_attempts} passes: {best_draft}")

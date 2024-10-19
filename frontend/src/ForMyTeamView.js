@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Button, Spinner } from 'react-bootstrap';
 import axios from 'axios';
-import { Button, Spinner, Form, Card } from 'react-bootstrap';
 
 function ForMyTeamView() {
   const [targetAudience, setTargetAudience] = useState('');
@@ -10,11 +10,52 @@ function ForMyTeamView() {
   const [response, setResponse] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState(null);
+  const [statusMessages, setStatusMessages] = useState([]);
+  const [requestId, setRequestId] = useState(null);
+  const [requestSent, setRequestSent] = useState(false);
+
+  useEffect(() => {
+    let intervalId;
+    if (requestId) {
+      intervalId = setInterval(async () => {
+        try {
+          if (requestSent) {
+            return;
+          }
+          setRequestSent(true);
+          const result = await axios.get(`http://10.1.1.144:8110/request/${requestId}`);
+          setStatusMessages(prevMessages => [...new Set([...prevMessages, result.data.status])]);
+          setRequestSent(false);
+          console.log('Status Messages:', result.data.status);
+          if (result.data.results) {
+            setResponse(result.data.results);
+            setIsLoading(false);
+            clearInterval(intervalId);
+            setRequestSent(false);
+            console.log('Response:', result.data.results);
+          }
+        } catch (error) {
+          console.error('Error fetching status:', error);
+          setIsLoading(false);
+          clearInterval(intervalId);
+          setRequestSent(false);
+        }
+      }, 1000);
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [requestId]);
 
   const handleGenerate = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setResponse(null);
+    setStatusMessages([]);
+    setRequestId(null);
     try {
       const result = await axios.post('http://10.1.1.144:8110/generate', {
         targetAudience,
@@ -22,11 +63,11 @@ function ForMyTeamView() {
         voice,
         goal
       });
-      setResponse(result.data);
+      setRequestId(result.data.request_id);
+      console.log('Request ID:', result.data.request_id);
     } catch (error) {
       console.error('Error:', error);
-      // Handle error (you might want to set an error state and display it)
-    } finally {
+      setStatusMessages(prevMessages => [...prevMessages, 'An error occurred during generation.']);
       setIsLoading(false);
     }
   };
@@ -47,65 +88,51 @@ function ForMyTeamView() {
     <div>
       <form onSubmit={handleGenerate}>
         <div className="mb-3">
-          <Form.Group>
-            <Form.Label>Goal</Form.Label>
-            <div>
-              <Form.Check
-                inline
-                type="radio"
-                label="Initiative (Strategic Goals)"
-                name="goal"
-                value="Initiative"
-                checked={goal === 'Initiative'}
-                onChange={(e) => setGoal(e.target.value)}
-              />
-              <Form.Check
-                inline
-                type="radio"
-                label="Epic (Feature Set)"
-                name="goal"
-                value="Epic"
-                checked={goal === 'Epic'}
-                onChange={(e) => setGoal(e.target.value)}
-              />
-              <Form.Check
-                inline
-                type="radio"
-                label="Story (Task Details)"
-                name="goal"
-                value="Story"
-                checked={goal === 'Story'}
-                onChange={(e) => setGoal(e.target.value)}
-              />
-            </div>
-          </Form.Group>
-        </div>
-        <div className="mb-3">
-          <textarea
-            className="form-control"
-            value={voice}
-            onChange={(e) => setVoice(e.target.value)}
-            placeholder="Enter your role (voice)"
-            rows="2"
-          ></textarea>
-        </div>
-        <div className="mb-3">
+          <label htmlFor="targetAudience" className="form-label">Target Audience</label>
           <input
             type="text"
             className="form-control"
+            id="targetAudience"
             value={targetAudience}
             onChange={(e) => setTargetAudience(e.target.value)}
-            placeholder="Describe the target audience"
+            placeholder="e.g., Development Team, Product Managers"
           />
         </div>
         <div className="mb-3">
+          <label htmlFor="draftUAC" className="form-label">Draft User Acceptance Criteria</label>
           <textarea
             className="form-control"
+            id="draftUAC"
             value={draftUAC}
             onChange={(e) => setDraftUAC(e.target.value)}
-            placeholder="Provide your acceptance criteria"
+            placeholder="Enter your draft user acceptance criteria here"
             rows="4"
           ></textarea>
+        </div>
+        <div className="mb-3">
+          <label htmlFor="voice" className="form-label">Voice</label>
+          <input
+            type="text"
+            className="form-control"
+            id="voice"
+            value={voice}
+            onChange={(e) => setVoice(e.target.value)}
+            placeholder="e.g., Professional, Friendly, Technical"
+          />
+        </div>
+        <div className="mb-3">
+          <label htmlFor="goal" className="form-label">Goal</label>
+          <select
+            className="form-select"
+            id="goal"
+            value={goal}
+            onChange={(e) => setGoal(e.target.value)}
+          >
+            <option value="Initiative">Initiative</option>
+            <option value="Epic">Epic</option>
+            <option value="Feature">Feature</option>
+            <option value="User Story">User Story</option>
+          </select>
         </div>
         <button type="submit" className="btn btn-primary" disabled={isLoading}>
           {isLoading ? (
@@ -119,15 +146,41 @@ function ForMyTeamView() {
         </button>
       </form>
 
+      {statusMessages.length > 0 && (
+        <div className="alert alert-info mt-3">
+          <strong>Status Updates:</strong>
+          <ul className="mb-0">
+            {statusMessages.map((message, index) => (
+              <li key={index}>{message}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {response && (
-        <Card className="mt-4 border-success">
-          <Card.Body>
-            <Card.Title>Review Results for My Team</Card.Title>
-            <p><strong>Summary:</strong> {response.summary}</p>
-            <p><strong>Acceptance Criteria:</strong> {response.acceptance_criteria}</p>
-            <p><strong>Cross Team Dependencies:</strong> {response.cross_team_dependencies}</p>
-          </Card.Body>
-        </Card>
+        <div className="mt-4">
+          <h3>Generated User Acceptance Criteria</h3>
+          <div className="mb-3">
+            <strong>Summary:</strong>
+            <p>{response.summary}</p>
+          </div>
+          <div className="mb-3">
+            <strong>Acceptance Criteria:</strong>
+            <p>{response.acceptance_criteria}</p>
+          </div>
+          <div className="mb-3">
+            <strong>Cross-team Dependencies:</strong>
+            <p>{response.cross_team_dependencies}</p>
+          </div>
+          <Button
+            variant="outline-secondary"
+            size="sm"
+            onClick={() => copyToClipboard(JSON.stringify(response, null, 2), 'all')}
+          >
+            📋 Copy All
+          </Button>
+          {copiedIndex === 'all' && <span className="text-success ms-2">Copied!</span>}
+        </div>
       )}
     </div>
   );

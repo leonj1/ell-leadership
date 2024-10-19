@@ -54,25 +54,41 @@ class RequestStatus(BaseModel):
 # Store for request statuses
 request_statuses: Dict[str, RequestStatus] = {}
 
-@app.post("/generate", response_model=GenerateOutput)
+@app.post("/generate")
 async def generate(input: GenerateInput):
-    recommendation = user_acceptance_criteria_recommendation_engine(input.goal, input.voice, input.targetAudience, input.draftUAC)
-    
-    summary = getattr(recommendation, 'summary', '')
-    acceptance_criteria = getattr(recommendation, 'acceptance_criteria', '')
-    cross_team_dependencies = getattr(recommendation, 'cross_team_dependencies', [])
+    request_id = str(uuid.uuid4())
+    request_statuses[request_id] = RequestStatus(status="Started")
 
-    # Convert cross_team_dependencies to a string
-    if isinstance(cross_team_dependencies, list):
-        cross_team_dependencies = ', '.join([f"{getattr(dep, 'team_name', '')}: {getattr(dep, 'description', '')}" for dep in cross_team_dependencies])
-    else:
-        cross_team_dependencies = str(cross_team_dependencies)
+    async def process_generate():
+        try:
+            def update_status(message: str):
+                request_statuses[request_id].status = message
 
-    return GenerateOutput(
-        summary=summary,
-        acceptance_criteria=acceptance_criteria,
-        cross_team_dependencies=cross_team_dependencies
-    )
+            update_status("Generating user acceptance criteria...")
+            recommendation = await asyncio.to_thread(user_acceptance_criteria_recommendation_engine, 
+                                                    input.goal, input.voice, input.targetAudience, input.draftUAC, update_status=update_status)
+            
+            summary = getattr(recommendation, 'summary', '')
+            acceptance_criteria = getattr(recommendation, 'acceptance_criteria', '')
+            cross_team_dependencies = getattr(recommendation, 'cross_team_dependencies', [])
+
+            # Convert cross_team_dependencies to a string
+            if isinstance(cross_team_dependencies, list):
+                cross_team_dependencies = ', '.join([f"{getattr(dep, 'team_name', '')}: {getattr(dep, 'expected_work', '')}" for dep in cross_team_dependencies])
+            else:
+                cross_team_dependencies = str(cross_team_dependencies)
+
+            update_status("Finalizing results...")
+            request_statuses[request_id].results = GenerateOutput(
+                summary=summary,
+                acceptance_criteria=acceptance_criteria,
+                cross_team_dependencies=cross_team_dependencies
+            ).dict()
+        except Exception as e:
+            request_statuses[request_id].status = f"Error: {str(e)}"
+
+    asyncio.create_task(process_generate())
+    return {"request_id": request_id}
 
 @app.post("/review")
 async def review(acceptance_criteria: AcceptanceCriteria):
