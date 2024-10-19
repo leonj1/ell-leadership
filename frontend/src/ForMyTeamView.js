@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button, Spinner } from 'react-bootstrap';
 import axios from 'axios';
 import GeneratedResponse from './GeneratedResponse';
@@ -14,6 +14,9 @@ function ForMyTeamView() {
   const [statusMessages, setStatusMessages] = useState([]);
   const [requestId, setRequestId] = useState(null);
   const [requestSent, setRequestSent] = useState(false);
+  const [prevResponse, setPrevResponse] = useState(null);
+
+  const bottomRef = useRef(null);
 
   useEffect(() => {
     let intervalId;
@@ -44,12 +47,25 @@ function ForMyTeamView() {
       }, 1000);
     }
 
+    useEffect(() => {
+      if (response) {
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, [response]);
+
     return () => {
       if (intervalId) {
         clearInterval(intervalId);
       }
     };
   }, [requestId]);
+
+  useEffect(() => {
+    if (response && !prevResponse) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+    setPrevResponse(response);
+  }, [response]);
 
   const handleGenerate = async (e) => {
     e.preventDefault();
@@ -163,11 +179,8 @@ function ForMyTeamView() {
         </div>
       )}
 
-      {response && 
-      <GeneratedResponse 
-        response={response} 
-        onCopy={copyToClipboard} 
-        copiedIndex={copiedIndex} />}
+      {response && <GeneratedResponse response={response} onCopy={copyToClipboard} copiedIndex={copiedIndex} />}
+      <div ref={bottomRef} />
     </div>
   );
 }
