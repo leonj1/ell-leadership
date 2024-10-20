@@ -38,11 +38,11 @@ describe('ForAnotherTeamView', () => {
 
     // Check if the component renders correctly
     expect(screen.getByRole('heading', { name: 'For Another Team' })).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: 'User Acceptance Criteria' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Provide User Acceptance Criteria to Review' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Review' })).toBeInTheDocument();
 
     // Fill in the form
-    fireEvent.change(screen.getByRole('textbox', { name: 'User Acceptance Criteria' }), {
+    fireEvent.change(screen.getByRole('textbox', { name: 'Provide User Acceptance Criteria to Review' }), {
       target: { value: 'Test criteria' },
     });
 
@@ -72,7 +72,7 @@ describe('ForAnotherTeamView', () => {
 
     render(<ForAnotherTeamView />);
 
-    fireEvent.change(screen.getByRole('textbox', { name: 'User Acceptance Criteria' }), {
+    fireEvent.change(screen.getByRole('textbox', { name: 'Provide User Acceptance Criteria to Review' }), {
       target: { value: 'Test criteria' },
     });
 

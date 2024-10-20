@@ -6,7 +6,7 @@ function CrossTeamDependencies({ dependencies = '' }) {
 
   return (
     <div className="mb-3">
-      <strong>Cross-team Dependencies:</strong>
+      <strong>Recommended cross-team dependencies:</strong>
       {dependencyList.length > 0 ? (
         <ListGroup variant="flush" className="mt-2">
           {dependencyList.map((dependency, index) => {

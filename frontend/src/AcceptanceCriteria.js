@@ -8,7 +8,7 @@ function AcceptanceCriteria({ criteria }) {
 
   return (
     <div className="mb-3">
-      <strong>Acceptance Criteria:</strong>
+      <strong>Recommended acceptance criteria:</strong>
       <ListGroup as="ol" numbered className="mt-2">
         {cleanedCriteriaList.map((item, index) => (
           <ListGroup.Item

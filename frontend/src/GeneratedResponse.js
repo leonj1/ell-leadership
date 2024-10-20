@@ -8,7 +8,7 @@ function GeneratedResponse({ response, onCopy, copiedIndex }) {
     <div className="mt-4">
       <h3>Generated User Acceptance Criteria</h3>
       <div className="mb-3">
-        <strong>Summary:</strong>
+        <strong>Summary of recommended user acceptance criteria:</strong>
         <p>{response.summary}</p>
       </div>
       <AcceptanceCriteria criteria={response.acceptance_criteria} />
