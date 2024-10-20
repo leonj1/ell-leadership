@@ -49,11 +49,6 @@ class UserAcceptanceCriteriaDraft(BaseModel):
     acceptance_criteria: str = Field(description="The user acceptance criteria with clear statement of the goals or what the milestones are.")
     cross_team_dependencies: List[TeamDependencies] = Field(description="The cross team dependencies that are needed to complete the user acceptance criteria.")
 
-class UserAcceptanceCriteriaChosen(BaseModel):
-    user_acceptance_criteria: str = Field(description="The user acceptance criteria in full detail.")
-    outcome: str = Field(description="The outcome of the problem written as PASS or FAIL")
-    confidence_score: int = Field(description="The confidence score this is a complete problem. Scores can be between 1-100.")
-
 ell.init(verbose=True)
 
 
@@ -79,7 +74,7 @@ def write_a_draft_of_a_user_acceptance_criteria(idea : str):
 @ell.complex(model="gpt-4o-2024-08-06", response_format=UserAcceptanceCriteriaDraft, temperature=0.1)
 def choose_the_best_draft(drafts : List[str]):
     """You are an expert editor of technical documents."""
-    return f"Choose the best draft from the following list: {'\n'.join(drafts)}"
+    return "Choose the best draft from the following list: " + "\n".join(drafts)
 
 @ell.complex(model="gpt-4o-2024-08-06", response_format=UserAcceptanceSummary, temperature=0.1)
 def summarize_user_acceptance_criteria(audience: str, proposal: str):
@@ -183,19 +178,6 @@ def product_owner_junior(user_acceptance_criteria: str, update_status):
             is_not_redundant_response]}.
             """
 
-# def attempt_rewrite(user_acceptance_criteria, max_attempts=3):
-#     default_response = ""
-#     for i in range(max_attempts):
-#         print(f"Attempt {i+1} of {max_attempts} to rewrite the user acceptance criteria...")
-#         rewrite = rewrite_user_acceptance_criteria(user_acceptance_criteria)
-#         print(f"Checking rewrite: {rewrite}")
-#         reviewed = product_owner_junior(rewrite)
-#         if reviewed.parsed.outcome == "PASS":
-#             print(f"Rewrite {i+1} of {max_attempts} passes: {rewrite}")
-#             return rewrite
-#         default_response = rewrite.parsed.user_acceptance_criteria
-#     return default_response
-
 def product_owner(user_acceptance_criteria: str, update_status=None):
     is_sentence_response = is_sentence(user_acceptance_criteria)
     if is_sentence_response.parsed.is_sentence == "NO":
@@ -261,29 +243,3 @@ def user_acceptance_criteria_recommendation_engine(goal: str, voice: str, audien
 
     print("Unable to rewrite the user acceptance criteria. Returning original attempt.")
     return best_draft.parsed
-
-
-# proposal = """
-# Create a website like facebook.
-# """
-
-# proposal = """
-# Add a hyperlink on the homepage.
-# """
-
-proposal = """
-Add a hyperlink that links to the facebook page. The link should be in the form of a button that is styled as a facebook logo. The link should be in the top right corner of the homepage.
-"""
-
-
-# review_message = product_owner(proposal)
-# review = review_message.parsed
-
-# title = summarize_problem(proposal)
-# header = f"{review.outcome} - {review.confidence_score}/100: {title}"
-# console = Console()
-# my_table = Table(title=header)
-# my_table.add_column("Recommendation", justify="left", style="green", no_wrap=False)
-# my_table.add_column("Response", justify="left", style="green", no_wrap=False)
-# my_table.add_row(review.recommendation, review.response)
-# console.print(my_table)
