@@ -9,7 +9,7 @@ from typing import List, Dict, Optional
 import asyncio
 
 try:
-    from review_acceptance_criteria import UserAcceptanceSummary, summarize_problem, product_owner, user_acceptance_criteria_recommendation_engine
+    from review_acceptance_criteria import UserAcceptanceSummary, product_owner, user_acceptance_criteria_recommendation_engine
     print("Successfully imported from review_acceptance_criteria")
 except ImportError as e:
     print(f"Error importing from review_acceptance_criteria: {e}")

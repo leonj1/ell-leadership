@@ -12,7 +12,7 @@ describe('CrossTeamDependencies', () => {
     });
 
     // Check if the title is rendered
-    expect(screen.getByText('Cross-team Dependencies:')).toBeInTheDocument();
+    expect(screen.getByText('Recommended cross-team dependencies:')).toBeInTheDocument();
 
     // Check if all teams and tasks are rendered
     expect(screen.getByText('Team A:')).toBeInTheDocument();
@@ -27,7 +27,7 @@ describe('CrossTeamDependencies', () => {
     act(() => {
       render(<CrossTeamDependencies dependencies="" />);
     });
-    expect(screen.getByText('Cross-team Dependencies:')).toBeInTheDocument();
+    expect(screen.getByText('Recommended cross-team dependencies:')).toBeInTheDocument();
     expect(screen.queryByRole('listitem')).not.toBeInTheDocument();
   });
 
@@ -74,7 +74,7 @@ describe('CrossTeamDependencies', () => {
     act(() => {
       render(<CrossTeamDependencies />);
     });
-    expect(screen.getByText('Cross-team Dependencies:')).toBeInTheDocument();
+    expect(screen.getByText('Recommended cross-team dependencies:')).toBeInTheDocument();
     expect(screen.getByText('No dependencies specified.')).toBeInTheDocument();
   });
 
@@ -82,7 +82,7 @@ describe('CrossTeamDependencies', () => {
     act(() => {
       render(<CrossTeamDependencies dependencies={null} />);
     });
-    expect(screen.getByText('Cross-team Dependencies:')).toBeInTheDocument();
+    expect(screen.getByText('Recommended cross-team dependencies:')).toBeInTheDocument();
     expect(screen.getByText('No dependencies specified.')).toBeInTheDocument();
   });
 });
