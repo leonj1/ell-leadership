@@ -92,7 +92,7 @@ function ForAnotherTeamView() {
             onChange={(e) => setUserAcceptance(e.target.value)}
             placeholder="Create a link to facebook.com"
             rows="4"
-            aria-label="User Acceptance Criteria"
+            aria-label="Provide User Acceptance Criteria to Review"
           ></textarea>
         </div>
         <button type="submit" className="btn btn-primary" disabled={isLoading}>
