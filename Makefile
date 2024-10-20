@@ -26,9 +26,14 @@ frontend-install:
 frontend-build: frontend-install
 	cd frontend && npm run build
 
-test:
+test: test-python test-frontend
+
+test-frontend:
 # run all tests even if they all passed previously
 	cd frontend && npm test -- --watchAll=false
+
+test-python:
+	python -m unittest test_review_acceptance_criteria.py
 
 dev: frontend-build
 	uvicorn main:app --reload --port $(PORT)

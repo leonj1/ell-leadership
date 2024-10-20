@@ -79,7 +79,7 @@ def write_a_draft_of_a_user_acceptance_criteria(idea : str):
 @ell.complex(model="gpt-4o-2024-08-06", response_format=UserAcceptanceCriteriaDraft, temperature=0.1)
 def choose_the_best_draft(drafts : List[str]):
     """You are an expert editor of technical documents."""
-    return f"Choose the best draft from the following list: {'\n'.join(drafts)}."
+    return f"Choose the best draft from the following list: {'\n'.join(drafts)}"
 
 @ell.complex(model="gpt-4o-2024-08-06", response_format=UserAcceptanceSummary, temperature=0.1)
 def summarize_user_acceptance_criteria(audience: str, proposal: str):
