@@ -53,10 +53,10 @@ describe('ForAnotherTeamView', () => {
     });
 
     // Check if the status updates are displayed
-    expect(screen.getByText('Status Updates:')).toBeInTheDocument();
+    await screen.findByText('Status Updates:');
     const statusContainer = screen.getByText('Status Updates:').closest('.alert');
     expect(statusContainer).toHaveClass('alert-info');
-    const statusMessage = screen.getByText('Waiting for updates...');
+    const statusMessage = await screen.findByText('Waiting for updates...');
     expect(statusMessage).toBeInTheDocument();
 
     // Wait for the response to be displayed
