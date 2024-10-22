@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Spinner } from 'react-bootstrap';
 import axios from 'axios';
 import GeneratedResponse from './GeneratedResponse';
+import './ForAnotherTeamView.css'; // Add this import
 
 function ForMyTeamView() {
   const [targetAudience, setTargetAudience] = useState('');
@@ -197,9 +198,12 @@ function ForMyTeamView() {
       {statusMessages.length > 0 && (
         <div className="alert alert-info mt-3">
           <strong>Status Updates:</strong>
-          <ul className="mb-0">
+          <ul className="mb-0 status-list">
             {statusMessages.map((message, index) => (
-              <li key={index}>{message}</li>
+              <li key={index} className="status-item">
+                <span className="status-checkmark"></span>
+                {message}
+              </li>
             ))}
           </ul>
         </div>
