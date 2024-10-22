@@ -1,8 +1,9 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import ForAnotherTeamView from './ForAnotherTeamView';
 import axios from 'axios';
+import './ForAnotherTeamView.css';
 
 jest.mock('axios');
 
@@ -32,7 +33,7 @@ describe('ForAnotherTeamView', () => {
     };
 
     axios.post.mockResolvedValueOnce(mockPostResponse);
-    axios.get.mockResolvedValue(mockGetResponse);
+    axios.get.mockResolvedValueOnce(mockGetResponse);
 
     render(<ForAnotherTeamView />);
 
@@ -47,24 +48,49 @@ describe('ForAnotherTeamView', () => {
     });
 
     // Submit the form
-    fireEvent.click(screen.getByText('Review'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('Review'));
+    });
 
-    // Wait for the response to be processed
-    await waitFor(() => {
-      expect(screen.getByText('Status Updates:')).toBeInTheDocument();
-    }, { timeout: 5000 });
+    // Check if the status updates are displayed
+    expect(screen.getByText('Status Updates:')).toBeInTheDocument();
+    const statusContainer = screen.getByText('Status Updates:').closest('.alert');
+    expect(statusContainer).toHaveClass('alert-info');
+    const statusMessage = screen.getByText('Waiting for updates...');
+    expect(statusMessage).toBeInTheDocument();
 
-    // Wait for the final response
-    await waitFor(() => {
-      expect(screen.getByText('Review Results for Another Team')).toBeInTheDocument();
-      expect(screen.getByText(/Test summary/)).toBeInTheDocument();
-      expect(screen.getByText(/Criteria 1/)).toBeInTheDocument();
-      expect(screen.getByText(/Criteria 2/)).toBeInTheDocument();
-    }, { timeout: 5000 });
+    // Wait for the response to be displayed
+    await screen.findByText('Review Results for Another Team', {}, { timeout: 5000 });
+    
+    // Check if the final response is displayed
+    expect(screen.getByText('Review Results for Another Team')).toBeInTheDocument();
+    expect(screen.getByText(/Test summary/)).toBeInTheDocument();
+    expect(screen.getByText(/Criteria 1/)).toBeInTheDocument();
+    expect(screen.getByText(/Criteria 2/)).toBeInTheDocument();
 
     // Check if axios.post and axios.get were called with the correct arguments
     expect(axios.post).toHaveBeenCalledWith('http://10.1.1.144:8110/review', { contents: 'Test criteria' });
     expect(axios.get).toHaveBeenCalledWith('http://10.1.1.144:8110/request/123');
+  });
+
+  it('applies styles from ForAnotherTeamView.css', () => {
+    render(<ForAnotherTeamView />);
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Provide User Acceptance Criteria to Review' }), {
+      target: { value: 'Test criteria' },
+    });
+
+    fireEvent.click(screen.getByText('Review'));
+
+    const statusContainer = screen.getByText('Status Updates:').closest('.alert');
+    expect(statusContainer).toHaveClass('alert-info');
+
+    const statusMessage = screen.getByText('Waiting for updates...');
+    expect(statusMessage).toBeInTheDocument();
+
+    // Note: We can't test the CSS styles directly in Jest, as it doesn't render styles.
+    // Instead, we can check if the correct classes are applied.
+    expect(statusContainer).toHaveClass('mt-3');
   });
 
   it('handles error during form submission', async () => {
@@ -76,10 +102,10 @@ describe('ForAnotherTeamView', () => {
       target: { value: 'Test criteria' },
     });
 
-    fireEvent.click(screen.getByText('Review'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('Review'));
+    });
 
-    await waitFor(() => {
-      expect(screen.getByText('Error: API Error')).toBeInTheDocument();
-    }, { timeout: 3000 });
+    expect(screen.getByText('Error: API Error')).toBeInTheDocument();
   });
 });

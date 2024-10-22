@@ -1,0 +1,30 @@
+.status-list {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.status-checkmark {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #28a745;
+  margin-right: 10px;
+  position: relative;
+}
+
+.status-checkmark::after {
+  content: '\2714';
+  font-size: 14px;
+  color: white;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}

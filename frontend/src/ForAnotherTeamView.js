@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button, Spinner, Card } from 'react-bootstrap';
+import './ForAnotherTeamView.css'; // Add this import
 
 function ForAnotherTeamView() {
   const [userAcceptance, setUserAcceptance] = useState('');
@@ -109,9 +110,12 @@ function ForAnotherTeamView() {
       {statusMessages.length > 0 && (
         <div className="alert alert-info mt-3">
           <strong>Status Updates:</strong>
-          <ul className="mb-0">
+          <ul className="mb-0 status-list">
             {statusMessages.map((message, index) => (
-              <li key={index}>{message}</li>
+              <li key={index} className="status-item">
+                <span className="status-checkmark"></span>
+                {message}
+              </li>
             ))}
           </ul>
         </div>
